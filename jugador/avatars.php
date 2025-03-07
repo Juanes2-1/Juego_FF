@@ -38,9 +38,6 @@
                     }
                 ?>
             </div>
-            <div name="container-select-avatars" id="container-select-avatars">
-                <p>H O L A - M U N D O</p>
-            </div>
         </div>
     </main>
 </body>

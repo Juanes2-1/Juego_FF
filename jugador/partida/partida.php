@@ -1,30 +1,30 @@
 <?php
     session_start();
-    require_once('../../conex/conex.php');
-    $conex = new Database;
-    $con = $conex->conectar();
+require_once('../../conex/conex.php');
+$conex = new Database;
+$con = $conex->conectar();
 
-    $ruta_avatares = "../../img/avatares/";
+$ruta_avatares = "../../img/avatares/";
 
     if (isset($_GET['id_sala'])) {
         $id_usuario = $_SESSION['id_usuario'];
         $id_sala = $_GET['id_sala'];
 
-        $sql = $con->prepare("SELECT usuario.ID_usuario, usuario.username, usuario.vida, avatar.imagen 
+$sql = $con->prepare("SELECT usuario.ID_usuario, usuario.username, usuario.vida, avatar.imagen 
           FROM usuario 
           INNER JOIN partidas ON usuario.ID_usuario = partidas.ID_usuario 
           INNER JOIN avatar ON usuario.ID_avatar = avatar.ID_avatar 
           WHERE partidas.ID_sala = ?");
         $sql->execute([$id_sala]);
-        $jugadores = $sql->fetchAll(PDO::FETCH_ASSOC);
+$jugadores = $sql->fetchAll(PDO::FETCH_ASSOC);
 
 
-        $sql = $con->prepare("SELECT username, vida, Puntos, avatar.imagen
+$sql = $con->prepare("SELECT username, vida, Puntos, avatar.imagen
                 FROM usuario 
                 INNER JOIN avatar ON usuario.ID_avatar = avatar.ID_avatar
                 WHERE ID_usuario = ?");
         $sql->execute([$id_usuario]);
-        $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
+$jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
     }
 ?>
 
@@ -127,7 +127,7 @@
                 method: 'GET',
                 data: { sala_id: SALA_ACTUAL_ID },
                 success: function(r) {
-                    $('#lista-armas').html(r);
+                        $('#lista-armas').html(r);
                     $('#modal-armas').show();
                 }
             });
@@ -191,7 +191,7 @@
                     
                     // Si el jugador muere, guardar estadísticas antes de mostrarlas
                     if (datos.vida <= 0) {
-                        guardarEstadisticasPartida();
+                                guardarEstadisticasPartida();
                     }
                 }
             });
@@ -208,7 +208,7 @@
                 },
                 success: function(r) {
                     console.log('Estadísticas guardadas:', r);
-                    mostrarEstadisticasFinales();
+                            mostrarEstadisticasFinales();
                 },
                 error: function(error) {
                     console.error('Error al guardar estadísticas:', error);
@@ -265,14 +265,14 @@
                 method: 'GET',
                 data: { usuario_id: USUARIO_ACTUAL_ID },
                 success: function(r) {
-                    const stats = JSON.parse(r);
+                        const stats = JSON.parse(r);
                     
                     // Mostrar estadísticas
                     $('#puntos-totales').text(`Puntos en esta partida: ${stats.puntos_partida}`);
                     $('#eliminaciones').text(`Eliminaciones: ${stats.eliminaciones_totales}`);
                     $('#daño-total').text(`Daño total: ${stats.dano_total}`);
                     
-                    $('#modal-estadisticas').show();
+                        $('#modal-estadisticas').show();
                 },
                 error: function(error) {
                     console.error('Error al obtener estadísticas:', error);
@@ -287,6 +287,68 @@
         setInterval(actualizarJugadorActual, 2000);
         setInterval(actualizarOtrosJugadores, 2000);
         setInterval(actualizarPuntos, 2000);
+
+        function finalizarPartida() {
+            fetch('finalizar_partida.php')
+            .then(response => response.json())
+            .then(data => {
+                // si es_ganador es true, muestra mensaje de victoria
+                if (data.ganador) {
+                    mostrarMensaje('¡Victoria!');
+                    reproducirSonidoVictoria();
+                    // mostrar efectos de victoria
+                } else {
+                    mostrarMensaje('Derrota');
+                    reproducirSonidoDerrota();
+                    // mostrar efectos de derrota
+                }
+                
+                // el resto del codigo del modal...
+            });
+        }
+
+        function volverAlLobby() {
+            window.location.href = '../sala/lobby.php';
+        }
+
+        function nuevaPartida() {
+            // Verificar si hay suficientes jugadores en la sala
+            fetch('verificar_jugadores_sala.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.suficientes_jugadores) {
+                    window.location.reload();
+                } else {
+                    mostrarMensaje('No hay suficientes jugadores para iniciar una nueva partida');
+                }
+            });
+        }
+
+        function desactivarControlesJuego() {
+            // Desactivar botones de ataque
+            const botonesAtaque = document.querySelectorAll('.btn-ataque');
+            botonesAtaque.forEach(boton => {
+                boton.disabled = true;
+            });
+            
+            // Desactivar seleccion de armas
+            const selectArmas = document.querySelector('#seleccion-arma');
+            if (selectArmas) {
+                selectArmas.disabled = true;
+            }
+        }
+
+        function mostrarMensaje(mensaje, tipo = 'info') {
+            const divMensaje = document.createElement('div');
+            divMensaje.className = `mensaje ${tipo}`;
+            divMensaje.textContent = mensaje;
+            
+            document.body.appendChild(divMensaje);
+            
+            setTimeout(() => {
+                divMensaje.remove();
+            }, 3000);
+        }
     </script>
 </body>
 </html>
