@@ -1,15 +1,16 @@
 <?php
+session_start();
 require_once('../../conex/conex.php');
-
-// inicializar conexion a la base de datos
 $conex = new Database;
 $con = $conex->conectar();
 
-$usuario_id = $_GET['usuario_id'];
+// obtenemos los puntos de la partida actual
+$sql = $con->prepare("SELECT puntos_partida 
+                     FROM partidas 
+                     WHERE ID_usuario = ? 
+                     AND ID_sala = ?");
+$sql->execute([$_GET['usuario_id'], $_GET['sala_id']]);
+$puntos = $sql->fetch(PDO::FETCH_ASSOC);
 
-    // Obtener puntos del jugador
-    $sql = $con->prepare("SELECT Puntos FROM usuario WHERE ID_usuario = ?");
-    $sql->execute([$usuario_id]);
-    $resultado = $sql->fetch(PDO::FETCH_ASSOC);
-
-echo json_encode($resultado); 
+echo json_encode($puntos);
+?>

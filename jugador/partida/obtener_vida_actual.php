@@ -1,13 +1,17 @@
 <?php
+// iniciamos la sesion para poder usar las variables de sesion
+session_start();
+
+// conectamos a la base de datos
 require_once('../../conex/conex.php');
 $conex = new Database;
 $con = $conex->conectar();
 
-$usuario_id = $_GET['usuario_id'];
+// obtenemos la vida del jugador que nos piden
+$sql = $con->prepare("SELECT vida FROM usuario WHERE ID_usuario = ?");
+$sql->execute([$_GET['usuario_id']]);
+$vida = $sql->fetch(PDO::FETCH_ASSOC);
 
-$query = "SELECT vida FROM usuario WHERE ID_usuario = ?";
-$stmt = $con->prepare($query);
-$stmt->execute([$usuario_id]);
-$vida = $stmt->fetch(PDO::FETCH_ASSOC);
-
-echo json_encode($vida); 
+// devolvemos la vida en formato json para que javascript lo entienda
+echo json_encode($vida);
+?> 

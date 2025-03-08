@@ -1,5 +1,5 @@
 <?php
-    session_start();
+session_start();
 require_once('../../conex/conex.php');
 $conex = new Database;
 $con = $conex->conectar();
@@ -35,7 +35,7 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Partida en Curso</title>
     <link rel="stylesheet" href="../../styles/styles_jugador/partida.css">
-    <link rel="stylesheet" href="../../styles/styles_jugador/estadisticas.css">
+    <link rel="stylesheet" href="../../styles/styles_jugador/armas.css">
 </head>
 <body>
     <div class="container">
@@ -80,7 +80,7 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
         </main>
 
         <footer>
-            <button onclick="location.href='index.php'" class="btn-abandonar">Abandonar Partida</button>
+            <button onclick="abandonarPartida()" class="btn-abandonar">Abandonar Partida</button>
         </footer>
     </div>
 
@@ -88,12 +88,11 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
     <div id="modal-armas" class="modal">
         <div class="modal-content">
             <h2>Selecciona un arma</h2>
-            <div id="lista-armas"></div>
-            <button onclick="cerrarModal()">Cancelar</button>
+            <div id="lista-armas" class="lista-armas"></div>
+            <!-- <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button> -->
         </div>
     </div>
 
-    <!-- Agregar antes del cierre del body -->
     <div id="modal-estadisticas" class="modal">
         <div class="modal-content">
             <h2>Resumen de partida</h2>
@@ -102,80 +101,122 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
                 <p id="eliminaciones">Eliminaciones: 0</p>
                 <p id="daño-total">Daño total: 0</p>
             </div>
-            <button onclick="location.href='index.php'" class="btn-salir">Volver al lobby</button>
+            <button onclick="location.href='../inicio.php'" class="btn-salir">Volver al lobby</button>
+        </div>
+    </div>
+
+    <!-- Agregar modal para mostrar ganador -->
+    <div id="modal-ganador" class="modal">
+        <div class="modal-content">
+            <h2>¡Fin de la partida!</h2>
+            <div class="ganador-info">
+                <h3>¡El ganador es:</h3>
+                <p id="nombre-ganador"></p>
+            </div>
+            <button onclick="location.href='../inicio.php'" class="btn-salir">Volver al lobby</button>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js/armas.js"></script>
     <script>
-        // variables globales para el manejo de la partida
+        // variables principales del juego
         const USUARIO_ACTUAL_ID = <?php echo $id_usuario; ?>;
         const SALA_ACTUAL_ID = <?php echo $id_sala; ?>;
         
-        let objetivoSeleccionado = null;
+        // variables para controlar el estado del juego
+        let objetivoSeleccionado = null; // guarda el id del jugador que vamos a atacar
+        let armaActual = null; // guarda el arma seleccionada
+        let danoArma = 0; // guarda el dano que hace el arma
+        let partidaTerminada = false; // nos dice si la partida ya termino
+        let estadisticasActualizadas = false; // nos dice si ya guardamos los resultados
 
-        // funcion que guarda el id del jugador seleccionado para atacar y abre el modal de armas
+        // guarda el jugador que queremos atacar y muestra las armas
         function seleccionarObjetivo(usuarioId) {
             objetivoSeleccionado = usuarioId;
             cargarArmas();
         }
 
-        // funcion que hace una peticion ajax para obtener las armas disponibles y mostrarlas en el modal
+        // pide al servidor las armas disponibles y las muestra en una ventana
         function cargarArmas() {
-            $.ajax({
-                url: 'obtener_armas.php',
-                method: 'GET',
-                data: { sala_id: SALA_ACTUAL_ID },
-                success: function(r) {
-                        $('#lista-armas').html(r);
-                    $('#modal-armas').show();
+        $.ajax({
+        url: 'obtener_armas.php',
+        method: 'GET',
+        success: function(r) {
+            // pone las armas en la ventana
+            $('#lista-armas').html(r);
+            
+            // cuando hacemos click en un arma, atacamos
+            $('.arma-opcion').off('click').on('click', function() {
+                const dano = parseInt($(this).data('dano'));
+                console.log('Daño seleccionado:', dano); // Debug
+                realizarAtaque(objetivoSeleccionado, dano, false);
+            });
+            
+            // muestra la ventana de armas
+            $('#modal-armas').show();
                 }
             });
         }
 
-        // funcion que procesa el ataque enviando los datos necesarios al servidor
-        function atacar(armaId) {
-            if (!objetivoSeleccionado) {
-                console.log('No hay objetivo seleccionado');
+        // funcion que hace el ataque al jugador seleccionado
+        function realizarAtaque(objetivoId, dano, esHeadshot) {
+            if (!objetivoId || dano === undefined) {
+                cerrarVentana();
                 return;
             }
-            
-            console.log('Enviando ataque:', {
-                atacante_id: USUARIO_ACTUAL_ID,
-                objetivo_id: objetivoSeleccionado,
-                arma_id: armaId,
-                sala_id: SALA_ACTUAL_ID
-            });
-            
+
             $.ajax({
-                url: 'procesar_ataque.php',
-                method: 'POST',
-                data: {
-                    atacante_id: USUARIO_ACTUAL_ID,
-                    objetivo_id: objetivoSeleccionado,
-                    arma_id: armaId,
-                    sala_id: SALA_ACTUAL_ID
-                },
-                success: function(r) {
-                    console.log('Respuesta del ataque:', r);
-                    cerrarModal();
-                    actualizarVidas();
-                    actualizarPuntos();
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error en el ataque:', error);
-                    console.log('Respuesta completa:', xhr.responseText);
+                url: 'obtener_vida_actual.php',
+                method: 'GET',
+                data: { usuario_id: USUARIO_ACTUAL_ID },
+                success: function(response) {
+                    const datos = JSON.parse(response);
+                    
+                    if (datos.vida <= 0) {
+                        cerrarVentana();
+                        return;
+                    }
+
+                    $.ajax({
+                        url: 'obtener_vida_actual.php',
+                        method: 'GET',
+                        data: { usuario_id: objetivoId },
+                        success: function(targetResponse) {
+                            const targetData = JSON.parse(targetResponse);
+                            
+                            if (targetData.vida <= 0) {
+                                cerrarVentana();
+                                return;
+                            }
+
+                            $.ajax({
+                                url: 'procesar_ataque.php',
+                                method: 'POST',
+                                data: {
+                                    objetivo_id: objetivoId,
+                                    dano: dano,
+                                    es_headshot: esHeadshot ? 1 : 0,
+                                    id_sala: SALA_ACTUAL_ID  // Agregamos el id de la sala
+                                },
+                                dataType: 'json',
+                                success: function(data) {
+                                    if (data.success) {
+                                        actualizarVidaJugador(objetivoId, data.vida_restante);
+                                        mostrarMensaje(`Daño causado: ${data.dano_causado}`, 'info');
+                                        actualizarPuntos();
+                                    }
+                                    cerrarVentana();
+                                    objetivoSeleccionado = null;
+                                }
+                            });
+                        }
+                    });
                 }
             });
         }
 
-        // funcion que oculta el modal de armas y reinicia el objetivo seleccionado
-        function cerrarModal() {
-            $('#modal-armas').hide();
-            objetivoSeleccionado = null;
-        }
-
-        // funcion que actualiza la barra de vida del jugador actual mediante ajax
+        // actualiza nuestra barra de vida
         function actualizarJugadorActual() {
             $.ajax({
                 url: 'obtener_vida_actual.php',
@@ -183,172 +224,244 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
                 data: { usuario_id: USUARIO_ACTUAL_ID },
                 success: function(r) {
                     const datos = JSON.parse(r);
-                    // calcula el porcentaje de vida para la barra de vida del jjugador
+                    // calcula cuanto mide la barra de vida
                     const porcentaje = (datos.vida / 100) * 100;
                     $('.jugador-actual .vida-actual')
                         .css('width', `${porcentaje}%`)
                         .text(`${datos.vida}/100`);
                     
-                    // Si el jugador muere, guardar estadísticas antes de mostrarlas
+                    // si morimos, desactiva los controles
                     if (datos.vida <= 0) {
-                                guardarEstadisticasPartida();
+                        desactivarControlesJuego();
+                        mostrarMensaje('has muerto', 'error');
                     }
                 }
             });
         }
 
-        // Agregar esta nueva función
-        function guardarEstadisticasPartida() {
-            $.ajax({
-                url: 'guardar_estadisticas.php',
-                method: 'POST',
-                data: { 
-                    usuario_id: USUARIO_ACTUAL_ID,
-                    sala_id: SALA_ACTUAL_ID
-                },
-                success: function(r) {
-                    console.log('Estadísticas guardadas:', r);
-                            mostrarEstadisticasFinales();
-                },
-                error: function(error) {
-                    console.error('Error al guardar estadísticas:', error);
-                }
-            });
-        }
-
-        // funcion que actualiza las barras de vida de los demas jugadores
+        // actualiza las vidas de los otros jugadores
         function actualizarOtrosJugadores() {
+            // primero revisa nuestra vida
             $.ajax({
-                url: 'obtener_vidas.php',
-                data: { sala_id: SALA_ACTUAL_ID },
+                url: 'obtener_vida_actual.php',
                 method: 'GET',
-                success: function(r) {
-                    const vidas = JSON.parse(r);
-                    // itera sobre cada jugador y actualiza su barra de vida si no es el jugador actual
-                    vidas.forEach(jugador => {
-                        if (jugador.ID_usuario != USUARIO_ACTUAL_ID) {
-                            const porcentaje = (jugador.vida / 100) * 100;
-                            // usa el selector data-id para encontrar la carta del jugador correcta
-                            $(`.jugador-card[data-id="${jugador.ID_usuario}"] .vida-actual`)
-                                .css('width', `${porcentaje}%`)
-                                .text(`${jugador.vida}/100`);
+                data: { usuario_id: USUARIO_ACTUAL_ID },
+                success: function(currentResponse) {
+                    const datosActual = JSON.parse(currentResponse);
+                    
+                    // luego revisa la vida de todos
+                    $.ajax({
+                        url: 'obtener_vidas.php',
+                        data: { sala_id: SALA_ACTUAL_ID },
+                        method: 'GET',
+                        success: function(r) {
+                            const vidas = JSON.parse(r);
+                            let jugadoresVivos = 0;
+                            let ultimoJugadorVivo = null;
+
+                            // cuenta si estamos vivos
+                            if (parseInt(datosActual.vida) > 0) {
+                                jugadoresVivos++;
+                                ultimoJugadorVivo = {
+                                    ID_usuario: USUARIO_ACTUAL_ID,
+                                    username: $('.jugador-actual h2').text().replace('Username: ', ''),
+                                    vida: datosActual.vida
+                                };
+                            }
+
+                            // cuenta los otros jugadores vivos
+                            vidas.forEach(jugador => {
+                                if (jugador.ID_usuario != USUARIO_ACTUAL_ID) {
+                                    // actualiza sus barras de vida
+                                    const porcentaje = (jugador.vida / 100) * 100;
+                                    $(`.jugador-card[data-id="${jugador.ID_usuario}"] .vida-actual`)
+                                        .css('width', `${porcentaje}%`)
+                                        .text(`${jugador.vida}/100`);
+
+                                    if (parseInt(jugador.vida) > 0) {
+                                        jugadoresVivos++;
+                                        ultimoJugadorVivo = jugador;
+                                    }
+                                }
+                            });
+
+                            // si solo queda un jugador vivo, termina la partida
+                            if (jugadoresVivos === 1 && ultimoJugadorVivo && !estadisticasActualizadas) {
+                                mostrarGanador(ultimoJugadorVivo);
+                                estadisticasActualizadas = true;
+                                
+                                // detiene todas las actualizaciones
+                                clearInterval(window.intervalJugadorActual);
+                                clearInterval(window.intervalOtrosJugadores);
+                                clearInterval(window.intervalPuntos);
+                            }
                         }
                     });
                 }
             });
         }
 
-        // funcion que actualiza los puntos del jugador actual en la interfaz
+        // actualiza los puntos en la pantalla
         function actualizarPuntos() {
             $.ajax({
-                url: 'obtener_puntos.php',
+                url: 'obtener_estadisticas.php',
                 method: 'GET',
-                data: { usuario_id: USUARIO_ACTUAL_ID },
+                data: { 
+                    usuario_id: USUARIO_ACTUAL_ID
+                },
                 success: function(r) {
-                    console.log('Respuesta puntos:', r); // Debug
                     const datos = JSON.parse(r);
                     if (datos && datos.Puntos !== undefined) {
-                        // Actualiza el texto de puntos en la interfaz
                         $('.jugador-actual .stats p').text(`Puntos: ${datos.Puntos}`);
                     }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error al actualizar puntos:', error);
                 }
             });
         }
 
-        // Agregar función para mostrar estadísticas
+        // muestra las estadisticas finales
         function mostrarEstadisticasFinales() {
             $.ajax({
                 url: 'obtener_estadisticas.php',
                 method: 'GET',
-                data: { usuario_id: USUARIO_ACTUAL_ID },
+                data: { 
+                    usuario_id: USUARIO_ACTUAL_ID,
+                    sala_id: SALA_ACTUAL_ID 
+                },
                 success: function(r) {
-                        const stats = JSON.parse(r);
+                    const stats = JSON.parse(r);
                     
-                    // Mostrar estadísticas
                     $('#puntos-totales').text(`Puntos en esta partida: ${stats.puntos_partida}`);
-                    $('#eliminaciones').text(`Eliminaciones: ${stats.eliminaciones_totales}`);
+                    $('#eliminaciones').text(`Headshots: ${stats.headshots}`);
                     $('#daño-total').text(`Daño total: ${stats.dano_total}`);
                     
-                        $('#modal-estadisticas').show();
-                },
-                error: function(error) {
-                    console.error('Error al obtener estadísticas:', error);
+                    $('#modal-estadisticas').show();
                 }
             });
         }
 
-        // Actualizar puntos al cargar la página
-        actualizarPuntos();
-
-        // intervalos que actualizan la informacion cada 2 segundos
-        setInterval(actualizarJugadorActual, 2000);
-        setInterval(actualizarOtrosJugadores, 2000);
-        setInterval(actualizarPuntos, 2000);
-
-        function finalizarPartida() {
-            fetch('finalizar_partida.php')
-            .then(response => response.json())
-            .then(data => {
-                // si es_ganador es true, muestra mensaje de victoria
-                if (data.ganador) {
-                    mostrarMensaje('¡Victoria!');
-                    reproducirSonidoVictoria();
-                    // mostrar efectos de victoria
-                } else {
-                    mostrarMensaje('Derrota');
-                    reproducirSonidoDerrota();
-                    // mostrar efectos de derrota
-                }
-                
-                // el resto del codigo del modal...
-            });
-        }
-
+        // volver al menu principal
         function volverAlLobby() {
+            partidaTerminada = false;
+            estadisticasActualizadas = false;
             window.location.href = '../sala/lobby.php';
         }
 
-        function nuevaPartida() {
-            // Verificar si hay suficientes jugadores en la sala
-            fetch('verificar_jugadores_sala.php')
-            .then(response => response.json())
-            .then(data => {
-                if (data.suficientes_jugadores) {
-                    window.location.reload();
-                } else {
-                    mostrarMensaje('No hay suficientes jugadores para iniciar una nueva partida');
-                }
-            });
-        }
-
+        // desactiva los botones de ataque cuando morimos
         function desactivarControlesJuego() {
-            // Desactivar botones de ataque
-            const botonesAtaque = document.querySelectorAll('.btn-ataque');
+            const botonesAtaque = document.querySelectorAll('.btn-atacar');
             botonesAtaque.forEach(boton => {
                 boton.disabled = true;
+                boton.style.opacity = '0.5';
+                boton.style.cursor = 'not-allowed';
             });
             
-            // Desactivar seleccion de armas
-            const selectArmas = document.querySelector('#seleccion-arma');
-            if (selectArmas) {
-                selectArmas.disabled = true;
-            }
+            cerrarVentana();
+            $('.arma-opcion').off('click');
         }
 
+        // muestra mensajes temporales en la pantalla
         function mostrarMensaje(mensaje, tipo = 'info') {
             const divMensaje = document.createElement('div');
             divMensaje.className = `mensaje ${tipo}`;
             divMensaje.textContent = mensaje;
-            
             document.body.appendChild(divMensaje);
-            
-            setTimeout(() => {
-                divMensaje.remove();
-            }, 3000);
+            setTimeout(() => divMensaje.remove(), 3000);
         }
+
+        // actualiza la barra de vida de un jugador
+        function actualizarVidaJugador(jugadorId, vidaRestante) {
+            if (vidaRestante !== undefined) {
+                const porcentaje = (vidaRestante / 100) * 100;
+                $(`.jugador-card[data-id="${jugadorId}"] .vida-actual`)
+                    .css('width', `${porcentaje}%`)
+                    .text(`${vidaRestante}/100`);
+            }
+        }
+
+        // cierra la ventana de armas
+        function cerrarVentana() {
+            $('#modal-armas').hide();
+            objetivoSeleccionado = null;
+        }
+
+        // muestra quien gano la partida
+        function mostrarGanador(jugador) {
+            // esconde todas las ventanas y muestra la del ganador
+            $('.modal').hide();
+            const $modalGanador = $('#modal-ganador');
+            
+            $modalGanador.css({
+                'display': 'block',
+                'position': 'fixed',
+                'top': '50%',
+                'left': '50%',
+                'transform': 'translate(-50%, -50%)',
+                'background-color': 'white',
+                'padding': '20px',
+                'border-radius': '5px',
+                'box-shadow': '0 0 10px rgba(0,0,0,0.5)',
+                'z-index': '99999'
+            }).show();
+
+            // muestra el nombre del ganador
+            $('#nombre-ganador').text(jugador.username);
+            desactivarControlesJuego();
+
+            // guarda los resultados si no se han guardado
+            if (!estadisticasActualizadas) {
+                $.ajax({
+                    url: 'actualizar_estadisticas_partida.php',
+                    method: 'POST',
+                    data: {
+                        sala_id: SALA_ACTUAL_ID,
+                        ganador_id: jugador.ID_usuario
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            estadisticasActualizadas = true;
+                        }
+                    }
+                });
+            }
+        }
+
+        // maneja el abandono de la partida
+        function abandonarPartida() {
+            $.ajax({
+                url: 'abandonar_partida.php',
+                method: 'POST',
+                data: {
+                    usuario_id: USUARIO_ACTUAL_ID,
+                    sala_id: SALA_ACTUAL_ID
+                },
+                success: function(response) {
+                    // redirige al inicio y evita que use el botón atrás
+                    window.location.replace('../inicio.php');
+                }
+            });
+        }
+
+        // cuando la pagina carga
+        $(document).ready(function() {
+            // configurar la ventana del ganador
+            $('#modal-ganador').css({
+                'position': 'fixed',
+                'top': '50%',
+                'left': '50%',
+                'transform': 'translate(-50%, -50%)',
+                'background-color': 'white',
+                'padding': '20px',
+                'border-radius': '5px',
+                'box-shadow': '0 0 10px rgba(0,0,0,0.5)',
+                'z-index': '9999'
+            });
+
+            // actualiza la informacion cada 2 segundos
+            window.intervalJugadorActual = setInterval(actualizarJugadorActual, 2000);
+            window.intervalOtrosJugadores = setInterval(actualizarOtrosJugadores, 2000);
+            window.intervalPuntos = setInterval(actualizarPuntos, 2000);
+        });
     </script>
 </body>
 </html>
