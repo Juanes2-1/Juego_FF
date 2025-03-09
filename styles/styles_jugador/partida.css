@@ -1,4 +1,16 @@
 /* Estilos generales de la partida */
+
+body {
+    background-image: url('../../img/mapas/purgatorio.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -13,7 +25,7 @@
 }
 
 .jugador-card {
-    border: 1px solid #ddd;
+    border: 1px solid #1a1818;
     padding: 15px;
     border-radius: 8px;
     text-align: center;
@@ -27,7 +39,7 @@
 }
 
 .vida-barra {
-    background: #ddd;
+    background: #ac0c0cbe;
     height: 20px;
     border-radius: 10px;
     margin: 10px 0;
@@ -76,7 +88,7 @@
 }
 
 .mensaje.info {
-    background: rgba(0, 100, 255, 0.9);
+    background: rgba(13, 231, 79, 0.9);
     color: white;
 }
 
@@ -88,17 +100,6 @@
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-20px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-.temporizador {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-size: 1.2em;
 }
 
 .modal-estadisticas {
@@ -264,4 +265,13 @@
     font-size: 12px;
     margin-top: 5px;
     font-weight: bold;
-} 
+}
+
+
+
+/* Make container background slightly transparent to see the background image */
+.container {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}

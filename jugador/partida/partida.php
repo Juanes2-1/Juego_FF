@@ -149,8 +149,10 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
             // cuando hacemos click en un arma, atacamos
             $('.arma-opcion').off('click').on('click', function() {
                 const dano = parseInt($(this).data('dano'));
-                console.log('Daño seleccionado:', dano); // Debug
-                realizarAtaque(objetivoSeleccionado, dano, false);
+                // 10% de probabilidad de headshot
+                const esHeadshot = Math.random() < 0.40;//utilizamos la librereria Math.random() para que el headshot tenga una probabilidad de 40%
+                console.log('Daño seleccionado:', dano, 'Headshot:', esHeadshot);
+                realizarAtaque(objetivoSeleccionado, dano, esHeadshot);
             });
             
             // muestra la ventana de armas
@@ -161,6 +163,7 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
 
         // funcion que hace el ataque al jugador seleccionado
         function realizarAtaque(objetivoId, dano, esHeadshot) {
+            console.log('Realizando ataque:', { objetivoId, dano, esHeadshot }); // Agregar este log
             if (!objetivoId || dano === undefined) {
                 cerrarVentana();
                 return;
@@ -203,7 +206,11 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
                                 success: function(data) {
                                     if (data.success) {
                                         actualizarVidaJugador(objetivoId, data.vida_restante);
-                                        mostrarMensaje(`Daño causado: ${data.dano_causado}`, 'info');
+                                        if (data.esHeadshot) {
+                                            mostrarMensaje(`¡HEADSHOT! Daño causado: ${data.dano_causado}`, 'critical');
+                                        } else {
+                                            mostrarMensaje(`Daño causado: ${data.dano_causado}`, 'info');
+                                        }
                                         actualizarPuntos();
                                     }
                                     cerrarVentana();
@@ -441,42 +448,42 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
             });
         }
 
-        // iniciar el contador de 5 minutos
-        function iniciarContador() {
-            let tiempo = 300; // 5 minutos en segundos (300 seg)
-            const contadorElement = document.getElementById('container-contador'); // selecciona el elemento del contador en el DOM
-            const intervalo = setInterval(function() { // establece un intervalo que se ejecuta cada segundo
-                const minutos = Math.floor(tiempo / 60); // calcula los minutos restantes
-                const segundos = tiempo % 60; // calcula los segundos restantes
-                // actualiza el texto del contador con el formato mm:ss
-                contadorElement.innerText = `${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
-                if (tiempo <= 0) { // si el tiempo llega a 0
-                    clearInterval(intervalo); // detiene el intervalo
-                    finalizarPartida(); // llama a la funcion para finalizar la partida
-                }
-                tiempo--; // decrementa el tiempo en 1 segundo
-            }, 1000); // el intervalo se ejecuta cada 1000 milisegundos (1 segundo)
-        }
-
-        // finalizar la partida y redirigir a inicio.php
-        function finalizarPartida() {
-            $.ajax({
-                url: 'finalizar_partida.php', // URL del archivo PHP que finaliza la partida
-                method: 'POST', // metodo HTTP POST
-                data: { sala_id: SALA_ACTUAL_ID }, // datos enviados al servidor, en este caso el id de la sala
-                success: function(response) { // funcion que se ejecuta si la solicitud es exitosa
-                    const data = JSON.parse(response); // convierte la respuesta JSON en un objeto
-                    if (data.success) { // si la respuesta indica exito
-                        mostrarMensaje('La partida ha terminado. Redirigiendo...', 'info'); // muestra un mensaje de informacion
-                        setTimeout(() => { // establece un temporizador para redirigir despues de 3 segundos
-                            window.location.href = '../inicio.php'; // redirige a la pagina de inicio
-                        }, 3000); // el temporizador se ejecuta despues de 3000 milisegundos (3 segundos)
-                    } else {
-                        mostrarMensaje('Error al finalizar la partida', 'error'); // muestra un mensaje de error si algo falla
-                    }
-                }
-            });
-        }
+        //// iniciar el contador de 5 minutos
+        //function iniciarContador() {
+        //    let tiempo = 300; // 5 minutos en segundos (300 seg)
+        //    const contadorElement = document.getElementById('container-contador'); // selecciona el elemento del contador en el DOM
+        //    const intervalo = setInterval(function() { // establece un intervalo que se ejecuta cada segundo
+        //        const minutos = Math.floor(tiempo / 60); // calcula los minutos restantes
+        //        const segundos = tiempo % 60; // calcula los segundos restantes
+        //        // actualiza el texto del contador con el formato mm:ss
+        //        contadorElement.innerText = `${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
+        //        if (tiempo <= 0) { // si el tiempo llega a 0
+        //            clearInterval(intervalo); // detiene el intervalo
+        //            finalizarPartida(); // llama a la funcion para finalizar la partida
+        //        }
+        //        tiempo--; // decrementa el tiempo en 1 segundo
+        //    }, 1000); // el intervalo se ejecuta cada 1000 milisegundos (1 segundo)
+        //}
+//
+        //// finalizar la partida y redirigir a inicio.php
+        //function finalizarPartida() {
+        //    $.ajax({
+        //        url: 'finalizar_partida.php', // URL del archivo PHP que finaliza la partida
+        //        method: 'POST', // metodo HTTP POST
+        //        data: { sala_id: SALA_ACTUAL_ID }, // datos enviados al servidor, en este caso el id de la sala
+        //        success: function(response) { // funcion que se ejecuta si la solicitud es exitosa
+        //            const data = JSON.parse(response); // convierte la respuesta JSON en un objeto
+        //            if (data.success) { // si la respuesta indica exito
+        //                mostrarMensaje('La partida ha terminado. Redirigiendo...', 'info'); // muestra un mensaje de informacion
+        //                setTimeout(() => { // establece un temporizador para redirigir despues de 3 segundos
+        //                    window.location.href = '../inicio.php'; // redirige a la pagina de inicio
+        //                }, 3000); // el temporizador se ejecuta despues de 3000 milisegundos (3 segundos)
+        //            } else {
+        //                mostrarMensaje('Error al finalizar la partida', 'error'); // muestra un mensaje de error si algo falla
+        //            }
+        //        }
+        //    });
+        //}
 
         $(document).ready(function() {
             iniciarContador();
