@@ -1,0 +1,102 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-image: url(../img/interfaz-login.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 100%;
+    height: 100vh;
+}
+
+.container-main {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    align-content: center;
+    place-items: center;
+}
+
+.container-main .container-form {
+    width: 600px;
+    height: 600px;
+    background-color: white;
+    opacity: 85%;
+    align-content: center;
+}
+
+.container-form .x_grupo {
+    place-items: center;
+    margin: 3%;
+}
+
+.container-form .x_grupo .x_input {
+    width: 400px;
+    height: 40px;
+    position: relative;
+}
+
+.container-form .x_grupo label {
+    font-weight: bold;
+}
+
+.container-form .x_grupo .x_input input {
+    width: 100%;
+    height: 100%;
+    background-color: #b4f3ee;
+}
+
+.x_grupo .x_input .form_estado {
+    position: absolute;
+    left: 370px;
+    top: 35%;
+}
+
+.container-form .registrarse {
+    width: 120px;
+    height: 30px;
+    border-radius: 10px;
+    background-color: rgb(248, 203, 4);
+    font-weight: bold;
+}
+
+/* ------------------------ */
+
+.x_grupo-correcto .form_estado {
+    color: #1ed12d;
+}
+
+.x_grupo-incorrecto .form_estado {
+    color: #bb2929;
+}
+
+.x_grupo-correcto .x_input {
+    border: 3px solid #1ed12d;
+}
+
+.x_grupo-incorrecto .x_input {
+    border: 3px solid #bb2929;
+}
+
+.bi-check-circle-fill {
+    color: #1ed12d;
+}
+
+.bi-exclamation-circle-fill {
+    color: #bb2929;
+}
+
+.x_error-block {
+    display: block;
+    color: red;
+    font-size: 14px;
+}
+
+.x_typerror {
+    display: none;
+}
+
+.x_typerror-block {
+    display: block;
+}

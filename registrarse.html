@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles/register.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+    <main class="container-main">
+        <form action="include/registro.php" method="post" class="container-form" id="form1">
+            <h1>REGISTRARSE</h1>
+            <div class="x_grupo" id="x_username">
+                <label for="usuario">Usuario</label>
+                <div class="x_input">
+                    <input type="varchar" id="username" name="username" placeholder="Ingrese su usuario">
+                    <i class="form_estado bi bi-exclamation-circle-fill"></i>
+                </div>
+                <p class="x_typerror">Usuario inválido</p>
+            </div>
+
+            <div class="x_grupo" id="x_email">
+                <label for="email">Correo electronico</label>
+                <div class="x_input">
+                    <input type="varchar" id="email" name="email" placeholder="Ingrese su correo electronico">
+                    <i class="form_estado bi bi-exclamation-circle-fill"></i>
+                </div>
+                <p class="x_typerror">Correo electronico inválido</p>
+            </div>
+
+            <div class="x_grupo" id="x_password">
+                <label for="password">Contraseña</label>
+                <div class="x_input">
+                    <input type="password" id="password" name="password" placeholder="Ingrese su contraseña">
+                    <i class="form_estado bi bi-exclamation-circle-fill"></i>
+                </div>
+                <p class="x_typerror">Contraseña inválido</p>
+            </div>
+
+            <button type="submit" name="registrarse" class="registrarse" id="registrarse">REGISTRARSE</button>
+        </form>
+    </main>
+</body>
+    <script src="validate/validar.js"></script>
+</html>

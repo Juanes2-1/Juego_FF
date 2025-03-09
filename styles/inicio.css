@@ -1,0 +1,138 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-image: url(../img/lobby3.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 100%;
+    height: 100vh;
+}
+
+.container-header {
+    width: 100%;
+    position: fixed;
+    columns: 0;
+    gap: 71%;
+}
+
+.container-header .container-info-user {
+    place-content: center;
+    align-content: center;
+    text-align: center;
+    background-color: #cdcdcd;
+    font-weight: bold;
+    width: 200px;
+    height: 40px;
+}
+
+.container-info-user label {
+    width: 100%;
+    height: 100%;
+}
+
+.container-header .container-sesion {
+    width: 200px;
+    height: 40px;
+}
+
+.container-sesion form {
+    width: 100%;
+    height: 100%;
+}
+
+.container-sesion form button {
+    width: 100%;
+    height: 100%;
+    background-color: #cdcdcd;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.container-main {
+    width: 100%;
+}
+
+.container-main .container-content {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.container-content .container-menu {
+    width: 100%;
+}
+
+.container-menu a {
+    display: block;
+    width: 200px;
+    height: 50px;
+    color: white;
+    background-color: black;
+    text-align: center;
+    align-content: center;
+    font-weight: bold;
+    text-decoration: none;
+    position: relative;
+    top: 50%;
+}
+
+.container-content .container-avatares {
+    width: 100%;
+}
+
+.container-avatares img {
+    width: 400px;
+    height: 600px;
+}
+
+.container-content .container-select {
+    width: 95%;
+    place-content: end;
+}
+
+.container-select .select-mapas {
+    width: 100%;
+    height: 50px;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    background-color: #1c294f;
+}
+
+.container-button {
+    place-content: center;
+    width: 100%;
+    height: 50px;
+    text-align: center;
+    font-weight: bold;
+    background-color: #ffcb46;
+}
+
+.container-button .button-iniciar {
+    text-decoration: none;
+    color: white;
+}
+
+@media screen and (max-width: 768px) {
+    .container-header {
+        width: 100%;
+    }
+
+    .container-header .container-info-user {
+        width: 100%;
+    }
+
+    .container-info-user label {
+        width: 100%;
+    }
+
+    .container-main .container-content {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+    }
+}

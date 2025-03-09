@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles/login.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+    <main class="container-main">
+        <form action="include/validacion_login.php" method="post" class="container-form" id='form1'>
+            <h1>INICIO DE SESIÓN</h1>
+            <div class="x_grupo" id="x_username">
+                <label for="username">Usuario</label>
+                <div class="x_input">
+                    <input type="varchar" id="username" name="username" placeholder="Ingrese su usuario" required>
+                    <i class="form_estado bi bi-exclamation-circle-fill"></i>
+                </div>
+                <p class="x_typerror">Usuario inválido</p>
+            </div>
+
+            <div class="x_grupo" id="x_password">
+                <label for="password">Contraseña</label>
+                <div class="x_input">
+                    <input type="password" id="password" name="password" placeholder="Ingrese su contraseña" required>
+                    <i class="form_estado bi bi-exclamation-circle-fill"></i>
+                </div>
+                <p class="x_typerror">Contraseña inválida</p>
+            </div>
+
+            <div class="container-div">
+                <a href="registrarse.html">¿No tiene una cuenta? Crea una.</a>
+            </div>
+
+            <button type="submit" name="enviar" class="enviar" id="enviar">ENVIAR</button>
+        </form>
+    </main>
+</body>
+    <script src="validate/validar.js"></script>
+</html>
