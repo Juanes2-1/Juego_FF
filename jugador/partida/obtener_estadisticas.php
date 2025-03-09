@@ -13,5 +13,5 @@ $sql = $con->prepare("SELECT Puntos, dano_total, headshots
 $sql->execute([$usuario_id]);
 $stats = $sql->fetch(PDO::FETCH_ASSOC);
 
-echo json_encode($stats);
+echo json_encode($stats);// es para que el front-end pueda acceder a los datos
 ?>

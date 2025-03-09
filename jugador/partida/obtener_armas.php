@@ -1,8 +1,5 @@
 <?php
-// iniciamos la sesion para poder usar las variables de sesion
 session_start();
-
-// conectamos a la base de datos
 require_once('../../conex/conex.php');
 $conex = new Database;
 $con = $conex->conectar();

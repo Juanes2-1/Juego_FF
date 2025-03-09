@@ -227,10 +227,9 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
                     // calcula cuanto mide la barra de vida
                     const porcentaje = (datos.vida / 100) * 100;
                     $('.jugador-actual .vida-actual')
-                        .css('width', `${porcentaje}%`)
-                        .text(`${datos.vida}/100`);
-                    
-                    // si morimos, desactiva los controles
+                        .css('width', `${porcentaje}%`)//ajusta el ancho de la barra de vida al porcentaje calculado
+                        .text(`${datos.vida}/100`);//actualiza el texto dentro de la barra de vida para mostrar la vida actual ejem: (50/100) 
+                    // evalua si morimos y desactiva los controles
                     if (datos.vida <= 0) {
                         desactivarControlesJuego();
                         mostrarMensaje('has muerto', 'error');
@@ -247,7 +246,7 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
                 method: 'GET',
                 data: { usuario_id: USUARIO_ACTUAL_ID },
                 success: function(currentResponse) {
-                    const datosActual = JSON.parse(currentResponse);
+                    const datosActual = JSON.parse(currentResponse);// la respuesta del servidor se convierte en un objeto (datosActual)
                     
                     // luego revisa la vida de todos
                     $.ajax({
@@ -255,7 +254,7 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
                         data: { sala_id: SALA_ACTUAL_ID },
                         method: 'GET',
                         success: function(r) {
-                            const vidas = JSON.parse(r);
+                            const vidas = JSON.parse(r); //la respuesta se convierte en un objeto (vidas) que traera las vidas de los jugadores
                             let jugadoresVivos = 0;
                             let ultimoJugadorVivo = null;
 
@@ -310,9 +309,9 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
                     usuario_id: USUARIO_ACTUAL_ID
                 },
                 success: function(r) {
-                    const datos = JSON.parse(r);
+                    const datos = JSON.parse(r);//el objeto datos traera
                     if (datos && datos.Puntos !== undefined) {
-                        $('.jugador-actual .stats p').text(`Puntos: ${datos.Puntos}`);
+                        $('.jugador-actual .stats p').text(`Puntos: ${datos.Puntos}`);// en esta linea se actualiza el texto de los puntos
                     }
                 }
             });
@@ -328,7 +327,7 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
                     sala_id: SALA_ACTUAL_ID 
                 },
                 success: function(r) {
-                    const stats = JSON.parse(r);
+                    const stats = JSON.parse(r);//obtenemos las estadisticas del jugador actual
                     
                     $('#puntos-totales').text(`Puntos en esta partida: ${stats.puntos_partida}`);
                     $('#eliminaciones').text(`Headshots: ${stats.headshots}`);
@@ -343,10 +342,10 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
         function volverAlLobby() {
             partidaTerminada = false;
             estadisticasActualizadas = false;
-            window.location.href = '../sala/lobby.php';
+            window.location.href = '../inicio.php';
         }
 
-        // desactiva los botones de ataque cuando morimos
+        // funcion que desactiva los botones de ataque cuando morimos
         function desactivarControlesJuego() {
             const botonesAtaque = document.querySelectorAll('.btn-atacar');
             botonesAtaque.forEach(boton => {
@@ -442,22 +441,45 @@ $jugadorActual = $sql->fetch(PDO::FETCH_ASSOC);
             });
         }
 
-        // cuando la pagina carga
-        $(document).ready(function() {
-            // configurar la ventana del ganador
-            $('#modal-ganador').css({
-                'position': 'fixed',
-                'top': '50%',
-                'left': '50%',
-                'transform': 'translate(-50%, -50%)',
-                'background-color': 'white',
-                'padding': '20px',
-                'border-radius': '5px',
-                'box-shadow': '0 0 10px rgba(0,0,0,0.5)',
-                'z-index': '9999'
-            });
+        // iniciar el contador de 5 minutos
+        function iniciarContador() {
+            let tiempo = 300; // 5 minutos en segundos (300 seg)
+            const contadorElement = document.getElementById('container-contador'); // selecciona el elemento del contador en el DOM
+            const intervalo = setInterval(function() { // establece un intervalo que se ejecuta cada segundo
+                const minutos = Math.floor(tiempo / 60); // calcula los minutos restantes
+                const segundos = tiempo % 60; // calcula los segundos restantes
+                // actualiza el texto del contador con el formato mm:ss
+                contadorElement.innerText = `${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
+                if (tiempo <= 0) { // si el tiempo llega a 0
+                    clearInterval(intervalo); // detiene el intervalo
+                    finalizarPartida(); // llama a la funcion para finalizar la partida
+                }
+                tiempo--; // decrementa el tiempo en 1 segundo
+            }, 1000); // el intervalo se ejecuta cada 1000 milisegundos (1 segundo)
+        }
 
-            // actualiza la informacion cada 2 segundos
+        // finalizar la partida y redirigir a inicio.php
+        function finalizarPartida() {
+            $.ajax({
+                url: 'finalizar_partida.php', // URL del archivo PHP que finaliza la partida
+                method: 'POST', // metodo HTTP POST
+                data: { sala_id: SALA_ACTUAL_ID }, // datos enviados al servidor, en este caso el id de la sala
+                success: function(response) { // funcion que se ejecuta si la solicitud es exitosa
+                    const data = JSON.parse(response); // convierte la respuesta JSON en un objeto
+                    if (data.success) { // si la respuesta indica exito
+                        mostrarMensaje('La partida ha terminado. Redirigiendo...', 'info'); // muestra un mensaje de informacion
+                        setTimeout(() => { // establece un temporizador para redirigir despues de 3 segundos
+                            window.location.href = '../inicio.php'; // redirige a la pagina de inicio
+                        }, 3000); // el temporizador se ejecuta despues de 3000 milisegundos (3 segundos)
+                    } else {
+                        mostrarMensaje('Error al finalizar la partida', 'error'); // muestra un mensaje de error si algo falla
+                    }
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            iniciarContador();
             window.intervalJugadorActual = setInterval(actualizarJugadorActual, 2000);
             window.intervalOtrosJugadores = setInterval(actualizarOtrosJugadores, 2000);
             window.intervalPuntos = setInterval(actualizarPuntos, 2000);

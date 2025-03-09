@@ -1,81 +1,44 @@
 <?php
-require_once('../../conex/conex.php');
 session_start();
-
-if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['sala_id'])) {
-    exit;
-}
-
+require_once('../../conex/conex.php');
 $conex = new Database;
 $con = $conex->conectar();
 
-$usuario_id = $_SESSION['usuario_id'];
-$sala_id = $_SESSION['sala_id'];
+$sala_id = $_POST['sala_id'];
 
-// obtener datos completos de todos los jugadores
-$sql = $con->prepare("SELECT 
-                        usuario.ID_usuario,
-                        usuario.Nombre,
-                        usuario.Puntos,
-                        usuario.headshots,
-                        usuario.dano_total
-                      FROM usuario 
-                      INNER JOIN jugador_sala ON usuario.ID_usuario = jugador_sala.ID_usuario 
-                      WHERE jugador_sala.ID_sala = ?");
-$sql->execute([$sala_id]);
-$jugadores = $sql->fetchAll(PDO::FETCH_ASSOC);
+try {
+    // Obtener el jugador con más vida
+    $sql = $con->prepare("SELECT ID_usuario, vida FROM usuario 
+                          INNER JOIN partidas ON usuario.ID_usuario = partidas.ID_usuario 
+                          WHERE partidas.ID_sala = ? 
+                          ORDER BY vida DESC 
+                          LIMIT 1");
+    $sql->execute([$sala_id]);
+    $ganador = $sql->fetch(PDO::FETCH_ASSOC);
 
-// encontrar el puntaje mas alto
-$max_puntos = 0;
-foreach ($jugadores as $jugador) {
-    if ($jugador['Puntos'] > $max_puntos) {
-        $max_puntos = $jugador['Puntos'];
-    }
-}
+    if ($ganador) {
+        $ganador_id = $ganador['ID_usuario'];
 
-// actualizar estadisticas y preparar datos de respuesta
-$puntuaciones = [];
-$es_ganador = false;
+        // Actualizar estadísticas del ganador
+        $sql = $con->prepare("UPDATE usuario u 
+                             SET u.partidas_ganadas = u.partidas_ganadas + 1
+                             WHERE u.ID_usuario = ?");
+        $sql->execute([$ganador_id]);
 
-foreach ($jugadores as $jugador) {
-    if ($jugador['Puntos'] == $max_puntos) {
-        // actualizar ganador
-        $sql = $con->prepare("UPDATE usuario 
-                             SET partidas_ganadas = partidas_ganadas + 1 
-                             WHERE ID_usuario = ?");
-        $sql->execute([$jugador['ID_usuario']]);
-        
-        if ($jugador['ID_usuario'] == $usuario_id) {
-            $es_ganador = true;
-        }
+        // Actualizar estadísticas de los perdedores
+        $sql = $con->prepare("UPDATE usuario u 
+                             INNER JOIN partidas p ON u.ID_usuario = p.ID_usuario 
+                             SET u.partidas_perdidas = u.partidas_perdidas + 1
+                             WHERE p.ID_sala = ? 
+                             AND p.ID_usuario != ?");
+        $sql->execute([$sala_id, $ganador_id]);
+
+        echo json_encode(['success' => true, 'ganador' => $ganador_id]);
     } else {
-        // actualizar perdedor
-        $sql = $con->prepare("UPDATE usuario 
-                             SET partidas_perdidas = partidas_perdidas + 1 
-                             WHERE ID_usuario = ?");
-        $sql->execute([$jugador['ID_usuario']]);
+        echo json_encode(['error' => 'No se encontró un ganador']);
     }
-    
-    // preparar datos para la tabla de puntuaciones
-    $puntuaciones[] = [
-        'id' => $jugador['ID_usuario'],
-        'nombre' => $jugador['Nombre'],
-        'puntos' => $jugador['Puntos'],
-        'headshots' => $jugador['headshots'],
-        'dano_total' => $jugador['dano_total']
-    ];
+
+} catch (Exception $e) {
+    echo json_encode(['error' => $e->getMessage()]);
 }
-
-// obtener estadisticas actualizadas del jugador actual
-$sql = $con->prepare("SELECT partidas_ganadas, partidas_perdidas, headshots, dano_total 
-                      FROM usuario 
-                      WHERE ID_usuario = ?");
-$sql->execute([$usuario_id]);
-$estadisticas = $sql->fetch(PDO::FETCH_ASSOC);
-
-echo json_encode([
-    'ganador' => $es_ganador,
-    'puntos_maximos' => $max_puntos,
-    'puntuaciones' => $puntuaciones,
-    'estadisticas' => $estadisticas
-]);
+?>

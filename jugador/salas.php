@@ -31,10 +31,10 @@
     function updateSalas() {
         const xhr = new XMLHttpRequest();
         const id_select_sala = <?php echo json_encode($id_select_sala); ?>;
-        xhr.open('GET', '../ajax/obtener_salas.php?id_select_sala=' + id_select_sala, true);
+        xhr.open('GET', '../ajax/obtener_salas.php?id_select_sala=' + id_select_sala, true);//aqui se hace la peticion, primero se pasa el metodo, luego la url y por ultimo si es asincrono o no
         xhr.onload = function() {
             if (this.status === 200) {
-                const salas = JSON.parse(this.responseText);
+                const salas = JSON.parse(this.responseText);//aqui se convierte la respuesta para poder ser leida
                 let output = ''; 
                 salas.forEach(function(sala) {
                     output += `

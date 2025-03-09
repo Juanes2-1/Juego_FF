@@ -12,5 +12,5 @@ $sql = $con->prepare("SELECT puntos_partida
 $sql->execute([$_GET['usuario_id'], $_GET['sala_id']]);
 $puntos = $sql->fetch(PDO::FETCH_ASSOC);
 
-echo json_encode($puntos);
+echo json_encode($puntos);// es para que el front-end pueda acceder a los datos
 ?>
